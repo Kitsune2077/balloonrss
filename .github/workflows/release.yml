@@ -51,13 +51,17 @@ jobs:
         shell: pwsh
         run: choco install nsis -y --no-progress
 
-      - name: Download .NET Desktop Runtime 10 (bundled into installer)
+      - name: Build NSIS installer (lite, without bundled runtime)
+        shell: pwsh
+        run: '& "C:\Program Files (x86)\NSIS\makensis.exe" /V3 install/balloonRSS.nsi'
+
+      - name: Download .NET Desktop Runtime 10 (bundled into full installer)
         shell: pwsh
         run: Invoke-WebRequest -Uri "https://aka.ms/dotnet/10.0/windowsdesktop-runtime-win-x64.exe" -OutFile dotnet-runtime.exe
 
-      - name: Build NSIS installer
+      - name: Build NSIS installer (with bundled runtime)
         shell: pwsh
-        run: '& "C:\Program Files (x86)\NSIS\makensis.exe" /V3 install/balloonRSS.nsi'
+        run: '& "C:\Program Files (x86)\NSIS\makensis.exe" /V3 /DDOTNET_RUNTIME_BUNDLED install/balloonRSS.nsi'
 
       - name: Create GitHub release
         uses: softprops/action-gh-release@v2
@@ -71,10 +75,15 @@ jobs:
             ("The underlying connection was closed") with RSS feeds that require TLS 1.2+.
 
             ### Downloads
-            * **BalloonRSS_${{ steps.version.outputs.version }}_setup.exe** - installer; automatically
-              downloads the .NET Desktop Runtime 10 if it is missing.
+            * **BalloonRSS_${{ steps.version.outputs.version }}_setup.exe** - full installer with the
+              .NET Desktop Runtime 10 bundled (works offline).
+            * **BalloonRSS_${{ steps.version.outputs.version }}_setup_lite.exe** - slim installer;
+              requires the .NET Desktop Runtime 10. If it is missing, the installer offers to open
+              the official download page.
             * **BalloonRSS_${{ steps.version.outputs.version }}_portable.zip** - portable version;
-              all data is stored in a `data` folder next to the executable. Just extract and run.
+              all data is stored in a `data` folder next to the executable. Also requires the
+              .NET Desktop Runtime 10.
           files: |
             install/BalloonRSS_${{ steps.version.outputs.version }}_setup.exe
+            install/BalloonRSS_${{ steps.version.outputs.version }}_setup_lite.exe
             BalloonRSS_${{ steps.version.outputs.version }}_portable.zip

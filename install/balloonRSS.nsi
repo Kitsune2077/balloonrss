@@ -25,10 +25,14 @@
 !define PRODUCT_WEB_SITE "https://embyt.github.io/balloonrss"
 !define PRODUCT_DOWNLOAD_SITE "https://github.com/Kitsune2077/balloonrss/releases"
 
-; the application requires the .NET Desktop Runtime 10 (x64);
-; its installer must be available as ${BASEDIR}\dotnet-runtime.exe at compile time
-; (the CI workflow downloads it there before compiling)
+; the application requires the .NET Desktop Runtime 10 (x64)
 !define DOTNET_RUNTIME_VERSION_PREFIX "10."
+!define DOTNET_RUNTIME_URL "https://aka.ms/dotnet/10.0/windowsdesktop-runtime-win-x64.exe"
+
+; compile with /DDOTNET_RUNTIME_BUNDLED to embed the runtime installer into the
+; setup executable; it must then be available as ${BASEDIR}\dotnet-runtime.exe
+; (the CI workflow downloads it there before compiling). Without the define a
+; slim setup is built which guides the user to the runtime download instead.
 
 !define BASEDIR ".."
 !define PUBLISHDIR "${BASEDIR}\publish\installer"
@@ -56,7 +60,11 @@
 
 ;Name and file
 Name "${APPL_NAME} ${APPL_VERSION}"
+!ifdef DOTNET_RUNTIME_BUNDLED
 OutFile "${APPL_NAME}_${APPL_VERSION}_setup.exe"
+!else
+OutFile "${APPL_NAME}_${APPL_VERSION}_setup_lite.exe"
+!endif
 
 ;Default installation folder
 InstallDir "$PROGRAMFILES\${APPL_NAME}"
@@ -129,12 +137,21 @@ runtime_find_done:
   FindClose $R0
 
   StrCmp $DotNetMissing 1 0 dotnet_done
+!ifdef DOTNET_RUNTIME_BUNDLED
+    ; the runtime installer is embedded in this setup executable
     MessageBox MB_OK|MB_ICONINFORMATION "The Microsoft .NET Desktop Runtime 10 (x64) was not found on this system and will be installed now."
     DetailPrint "Installing the .NET Desktop Runtime 10..."
     File "${BASEDIR}\dotnet-runtime.exe"
     ExecWait '"$OUTDIR\dotnet-runtime.exe" /install /quiet /norestart' $0
     DetailPrint ".NET Desktop Runtime installer exit code: $0"
     Delete "$OUTDIR\dotnet-runtime.exe"
+!else
+    ; slim setup: guide the user to the official runtime download
+    MessageBox MB_YESNO|MB_ICONQUESTION "BalloonRSS requires the Microsoft .NET Desktop Runtime 10 (x64), which was not found on this system.$\n$\nOpen the official download page now?$\n$\n(After installing the runtime, run this setup again to launch BalloonRSS.)" IDYES open_dotnet_download
+    Goto dotnet_done
+open_dotnet_download:
+    ExecShell "open" "${DOTNET_RUNTIME_URL}"
+!endif
 dotnet_done:
 
   ;Create shortcuts
