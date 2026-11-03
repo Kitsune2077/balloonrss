@@ -51,6 +51,10 @@ jobs:
         shell: pwsh
         run: choco install nsis -y --no-progress
 
+      - name: Download .NET Desktop Runtime 10 (bundled into installer)
+        shell: pwsh
+        run: Invoke-WebRequest -Uri "https://aka.ms/dotnet/10.0/windowsdesktop-runtime-win-x64.exe" -OutFile dotnet-runtime.exe
+
       - name: Build NSIS installer
         shell: pwsh
         run: '& "C:\Program Files (x86)\NSIS\makensis.exe" /V3 install/balloonRSS.nsi'

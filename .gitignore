@@ -9,3 +9,4 @@ bin/BalloonRss.pdb
 src/obj/
 publish/
 install/*.exe
+/dotnet-runtime.exe

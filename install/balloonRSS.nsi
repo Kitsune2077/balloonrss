@@ -25,9 +25,10 @@
 !define PRODUCT_WEB_SITE "https://embyt.github.io/balloonrss"
 !define PRODUCT_DOWNLOAD_SITE "https://github.com/Kitsune2077/balloonrss/releases"
 
-; the application requires the .NET Desktop Runtime 10 (x64)
+; the application requires the .NET Desktop Runtime 10 (x64);
+; its installer must be available as ${BASEDIR}\dotnet-runtime.exe at compile time
+; (the CI workflow downloads it there before compiling)
 !define DOTNET_RUNTIME_VERSION_PREFIX "10."
-!define DOTNET_RUNTIME_URL "https://aka.ms/dotnet/10.0/windowsdesktop-runtime-win-x64.exe"
 
 !define BASEDIR ".."
 !define PUBLISHDIR "${BASEDIR}\publish\installer"
@@ -128,14 +129,12 @@ runtime_find_done:
   FindClose $R0
 
   StrCmp $DotNetMissing 1 0 dotnet_done
-    MessageBox MB_YESNO|MB_ICONQUESTION "BalloonRSS requires the Microsoft .NET Desktop Runtime 10 (x64), which was not found on this system.$\n$\nDownload and install it now (about 55 MB)?" IDYES install_dotnet_runtime
-    Goto dotnet_done
-install_dotnet_runtime:
-    DetailPrint "Downloading the .NET Desktop Runtime 10..."
-    INetC::get /NOCANCEL "${DOTNET_RUNTIME_URL}" "$PLUGINSDIR\windowsdesktop-runtime-win-x64.exe"
-    Pop $0
-    ExecWait '"$PLUGINSDIR\windowsdesktop-runtime-win-x64.exe" /install /quiet /norestart' $0
+    MessageBox MB_OK|MB_ICONINFORMATION "The Microsoft .NET Desktop Runtime 10 (x64) was not found on this system and will be installed now."
+    DetailPrint "Installing the .NET Desktop Runtime 10..."
+    File "${BASEDIR}\dotnet-runtime.exe"
+    ExecWait '"$OUTDIR\dotnet-runtime.exe" /install /quiet /norestart' $0
     DetailPrint ".NET Desktop Runtime installer exit code: $0"
+    Delete "$OUTDIR\dotnet-runtime.exe"
 dotnet_done:
 
   ;Create shortcuts
