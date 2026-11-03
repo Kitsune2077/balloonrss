@@ -1,0 +1,76 @@
+name: Build and Release
+
+# builds the installer and portable packages;
+# triggered by version tags (v*) or manually from the Actions tab
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+    env:
+      DOTNET_NOLOGO: true
+      DOTNET_CLI_TELEMETRY_OPTOUT: true
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Read version from NSIS script
+        id: version
+        shell: bash
+        run: echo "version=$(sed -n 's/^!define APPL_VERSION "\([^"]*\)".*/\1/p' install/balloonRSS.nsi)" >> "$GITHUB_OUTPUT"
+
+      - name: Publish installer build (framework-dependent)
+        run: dotnet publish src/BalloonRss.csproj -c Release -r win-x64 --self-contained false -o publish/installer
+
+      - name: Publish portable build (framework-dependent)
+        run: dotnet publish src/BalloonRss.csproj -c Release -r win-x64 --self-contained false -p:Portable=true -o publish/portable
+
+      - name: Create portable data folder
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Path publish/portable/data | Out-Null
+          Set-Content -Path publish/portable/data/.keep -Value "BalloonRSS stores its portable data in this folder."
+
+      - name: Create portable zip
+        shell: pwsh
+        run: Compress-Archive -Path publish/portable/* -DestinationPath "BalloonRSS_${{ steps.version.outputs.version }}_portable.zip" -Force
+
+      - name: Install NSIS
+        shell: pwsh
+        run: choco install nsis -y --no-progress
+
+      - name: Build NSIS installer
+        shell: pwsh
+        run: '& "C:\Program Files (x86)\NSIS\makensis.exe" /V3 install/balloonRSS.nsi'
+
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.version.outputs.version }}
+          name: BalloonRSS ${{ steps.version.outputs.version }}
+          body: |
+            ## BalloonRSS ${{ steps.version.outputs.version }}
+
+            Migration from .NET Framework 3.5 to .NET 10, fixing connection errors
+            ("The underlying connection was closed") with RSS feeds that require TLS 1.2+.
+
+            ### Downloads
+            * **BalloonRSS_${{ steps.version.outputs.version }}_setup.exe** - installer; automatically
+              downloads the .NET Desktop Runtime 10 if it is missing.
+            * **BalloonRSS_${{ steps.version.outputs.version }}_portable.zip** - portable version;
+              all data is stored in a `data` folder next to the executable. Just extract and run.
+          files: |
+            install/BalloonRSS_${{ steps.version.outputs.version }}_setup.exe
+            BalloonRSS_${{ steps.version.outputs.version }}_portable.zip

@@ -84,9 +84,18 @@ namespace BalloonRss
 
         private static String GetUserChannelConfigFilename()
         {
+#if PORTABLE
+            // portable mode: keep the channel configuration in the data folder next to the executable
+            String dataDirectory = Path.Combine(
+                Path.GetDirectoryName(System.Windows.Forms.Application.ExecutablePath), "data");
+            Directory.CreateDirectory(dataDirectory);
+            return dataDirectory
+                + Path.DirectorySeparatorChar + Settings.Default.configFilename;
+#else
             return System.Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData)
                 + Path.DirectorySeparatorChar + "BalloonRSS"
                 + Path.DirectorySeparatorChar + Settings.Default.configFilename;
+#endif
         }
 
         private static String GetGlobalChannelConfigFilename()

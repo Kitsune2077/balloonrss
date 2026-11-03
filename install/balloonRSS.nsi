@@ -19,49 +19,34 @@
 ;--------------------------------
 ;Definitions
 !define APPL_NAME "BalloonRSS"
-!define APPL_VERSION "2.9"  ; keep this consistent with AssemblyInfo.cs!
+!define APPL_VERSION "2.9.1"  ; keep this consistent with AssemblyInfo.cs!
 !define PRODUCT_PUBLISHER "Roman Morawek"
 !define PRODUCT_PUBLISHER_WEB_SITE "https://www.embyt.com"
 !define PRODUCT_WEB_SITE "https://embyt.github.io/balloonrss"
-!define PRODUCT_DOWNLOAD_SITE "https://github.com/embyt/balloonrss/releases"
+!define PRODUCT_DOWNLOAD_SITE "https://github.com/Kitsune2077/balloonrss/releases"
+
+; the application requires the .NET Desktop Runtime 10 (x64)
+!define DOTNET_RUNTIME_VERSION_PREFIX "10."
+!define DOTNET_RUNTIME_URL "https://aka.ms/dotnet/10.0/windowsdesktop-runtime-win-x64.exe"
 
 !define BASEDIR ".."
+!define PUBLISHDIR "${BASEDIR}\publish\installer"
 
 
 ;--------------------------------
 ;Includes
-!include dotnet.nsh
 !include "MUI2.nsh"
 
 
 ;--------------------------------
 ;User defined macros
+
+; stops a running application instance using the Windows taskkill tool
 !macro CheckAppRunning APP_PROCESS_NAME
-  StrCpy $0 "${APP_PROCESS_NAME}"
-  DetailPrint "Searching for processes called '$0'"
-  KillProc::FindProcesses
-  StrCmp $1 "-1" wooops
-  Goto AppRunning
- 
-  AppRunning:
-    DetailPrint "-> Found $0 processes running"
-    StrCmp $0 "0" AppNotRunning
-    MessageBox MB_ICONQUESTION|MB_YESNO|MB_DEFBUTTON2 "${APP_PROCESS_NAME} is currently running. $\n$\nDo you want to close it and continue installation?" IDYES KillApp
-    DetailPrint "Installation Aborted!"
-    Abort
-  KillApp:
-    StrCpy $0 "${APP_PROCESS_NAME}"
-    DetailPrint "Killing all processes called '$0'"
-    KillProc::KillProcesses
-    StrCmp $1 "-1" wooops
-    DetailPrint "-> Killed $0 processes, failed to kill $1 processes"
-    sleep 1500
-    Goto AppNotRunning
-  wooops:
-    DetailPrint "-> Error: Something went wrong :-("
-    Abort
-  AppNotRunning:
-    DetailPrint "No Application Instances Found"
+  DetailPrint "Searching for processes called '${APP_PROCESS_NAME}'"
+  nsExec::ExecToLog 'taskkill /F /IM "${APP_PROCESS_NAME}"'
+  Pop $0
+  sleep 1500
 !macroend
 
 
@@ -80,8 +65,8 @@ InstallDirRegKey HKLM "Software\${APPL_NAME}" "Install_Dir"
 
 ;Start Menu Folder Page Configuration
 !define MUI_STARTMENUPAGE_DEFAULTFOLDER "${APPL_NAME}"
-!define MUI_STARTMENUPAGE_REGISTRY_ROOT "HKCU" 
-!define MUI_STARTMENUPAGE_REGISTRY_KEY "Software\${APPL_NAME}" 
+!define MUI_STARTMENUPAGE_REGISTRY_ROOT "HKCU"
+!define MUI_STARTMENUPAGE_REGISTRY_KEY "Software\${APPL_NAME}"
 !define MUI_STARTMENUPAGE_REGISTRY_VALUENAME "Start_Menu_Folder"
 
 ;Set installer icon
@@ -92,18 +77,18 @@ InstallDirRegKey HKLM "Software\${APPL_NAME}" "Install_Dir"
 ;Variables
 
 Var StartMenuFolder
+Var DotNetMissing
 
 ;--------------------------------
 ;Pages
 
 !insertmacro MUI_PAGE_WELCOME
-!insertmacro MUI_PAGE_LICENSE "${BASEDIR}\license.txt"
+!insertmacro MUI_PAGE_LICENSE "${BASEDIR}\LICENSE"
 !insertmacro MUI_PAGE_DIRECTORY
 !insertmacro MUI_PAGE_COMPONENTS
 !insertmacro MUI_PAGE_STARTMENU Application $StartMenuFolder
 !insertmacro MUI_PAGE_INSTFILES
 !define MUI_FINISHPAGE_RUN "$INSTDIR\BalloonRss.exe"
-!define MUI_FINISHPAGE_SHOWREADME "$INSTDIR\README.txt"
 !insertmacro MUI_PAGE_FINISH
 
 !insertmacro MUI_UNPAGE_CONFIRM
@@ -113,7 +98,7 @@ Var StartMenuFolder
 
 ;--------------------------------
 ;Languages
- 
+
 !insertmacro MUI_LANGUAGE "English"
 
 
@@ -126,14 +111,33 @@ Section "General" SecGeneral
 
   ; Kill application if it already runs
   !insertmacro CheckAppRunning "BalloonRss.exe"
-  
+
   ; Set output path to the installation directory.
   SetOutPath "$INSTDIR"
-  
-  File "${BASEDIR}\bin\BalloonRss.exe"
-  File "${BASEDIR}\README.txt"
-  File "${BASEDIR}\help\balloonrss.chm"
-  
+
+  ; Install all application files from the publish output
+  File /r "${PUBLISHDIR}\*"
+
+  ; Check whether the .NET Desktop Runtime is installed
+  StrCpy $DotNetMissing 1
+  FindFirst $R0 $R1 "$PROGRAMFILES64\dotnet\shared\Microsoft.WindowsDesktop.App\${DOTNET_RUNTIME_VERSION_PREFIX}*"
+runtime_find_loop:
+    StrCmp $R1 "" runtime_find_done
+    StrCpy $DotNetMissing 0
+runtime_find_done:
+  FindClose $R0
+
+  StrCmp $DotNetMissing 1 0 dotnet_done
+    MessageBox MB_YESNO|MB_ICONQUESTION "BalloonRSS requires the Microsoft .NET Desktop Runtime 10 (x64), which was not found on this system.$\n$\nDownload and install it now (about 55 MB)?" IDYES install_dotnet_runtime
+    Goto dotnet_done
+install_dotnet_runtime:
+    DetailPrint "Downloading the .NET Desktop Runtime 10..."
+    INetC::get /NOCANCEL "${DOTNET_RUNTIME_URL}" "$PLUGINSDIR\windowsdesktop-runtime-win-x64.exe"
+    Pop $0
+    ExecWait '"$PLUGINSDIR\windowsdesktop-runtime-win-x64.exe" /install /quiet /norestart' $0
+    DetailPrint ".NET Desktop Runtime installer exit code: $0"
+dotnet_done:
+
   ;Create shortcuts
   !insertmacro MUI_STARTMENU_WRITE_BEGIN Application
     CreateDirectory "$SMPROGRAMS\$StartMenuFolder"
@@ -142,7 +146,7 @@ Section "General" SecGeneral
 
   ;Store installation folder
   WriteRegStr HKLM "Software\${APPL_NAME}" "Install_Dir" $INSTDIR
-  
+
   ; Write the uninstall keys for Windows
   WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APPL_NAME}" "DisplayName" "${APPL_NAME}"
   WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APPL_NAME}" "UninstallString" '"$INSTDIR\uninstall.exe"'
@@ -164,13 +168,8 @@ SectionEnd
 ;--------------------------------
 ; Optional section (can be disabled by the user)
 
-Section "Language Files" SecLanguage
-  File /r /x .svn "${BASEDIR}\bin\de"
-  File /r /x .svn "${BASEDIR}\bin\pt"
-SectionEnd
-
 Section "Source Code" SecSource
-  File "${BASEDIR}\license.txt"
+  File "${BASEDIR}\LICENSE"
   File "${BASEDIR}\balloonRss.sln"
   File /r /x obj /x .svn /x BalloonRss.csproj.user "${BASEDIR}\src"
 SectionEnd
@@ -187,7 +186,7 @@ Section "un.General" SecUnGeneral
 
   ; Kill application if it already runs
   !insertmacro CheckAppRunning "BalloonRss.exe"
-  
+
   ; Remove files and uninstaller
   Delete /REBOOTOK "$INSTDIR\BalloonRss.exe"
   RMDir /r "$INSTDIR"
@@ -216,8 +215,6 @@ SectionEnd
 
 ; Language strings
 LangString DESC_SecGeneral ${LANG_ENGLISH} "Installs the required application files."
-LangString DESC_SecDotNet ${LANG_ENGLISH} "Installs the Microsoft .NET framework, which is required for this application. This will be skipped if the .NET framework is already present."
-LangString DESC_SecLanguage ${LANG_ENGLISH} "Installs language files for German and Portuguese."
 LangString DESC_SecSource ${LANG_ENGLISH} "Installs the source code."
 LangString DESC_SecAutostart ${LANG_ENGLISH} "Launch ${APPL_NAME} on start-up."
 
@@ -228,8 +225,6 @@ LangString DESC_SecUnData ${LANG_ENGLISH} "Removes application specific settings
 ;Assign language strings to sections
 !insertmacro MUI_FUNCTION_DESCRIPTION_BEGIN
     !insertmacro MUI_DESCRIPTION_TEXT ${SecGeneral} $(DESC_SecGeneral)
-    !insertmacro MUI_DESCRIPTION_TEXT ${SecDotNet} $(DESC_SecDotNet)
-    !insertmacro MUI_DESCRIPTION_TEXT ${SecLanguage} $(DESC_SecLanguage)
     !insertmacro MUI_DESCRIPTION_TEXT ${SecSource} $(DESC_SecSource)
     !insertmacro MUI_DESCRIPTION_TEXT ${SecAutostart} $(DESC_SecAutostart)
 !insertmacro MUI_FUNCTION_DESCRIPTION_END

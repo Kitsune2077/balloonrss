@@ -1,7 +1,11 @@
 .vs/
 .vscode/
+.idea/
 Backup/
 bin/Debug/
+bin/win-x64/
 bin/balloonrss.chm
 bin/BalloonRss.pdb
 src/obj/
+publish/
+install/*.exe

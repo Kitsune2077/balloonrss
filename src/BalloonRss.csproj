@@ -1,6 +1,9 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net7.0-windows</TargetFramework>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <!-- portable build (-p:Portable=true): store user data in a data folder next to the executable -->
+    <DefineConstants Condition=" '$(Portable)' == 'true' ">$(DefineConstants);PORTABLE</DefineConstants>
     <OutputType>WinExe</OutputType>
     <StartupObject>BalloonRss.FormMain</StartupObject>
     <ApplicationIcon>Resources\yellow32.ico</ApplicationIcon>
@@ -76,6 +79,6 @@
     <PackageReference Include="Microsoft.DotNet.UpgradeAssistant.Extensions.Default.Analyzers" Version="0.4.355802">
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
-    <PackageReference Include="Microsoft.Windows.Compatibility" Version="7.0.0" />
+    <PackageReference Include="Microsoft.Windows.Compatibility" Version="10.0.0" />
   </ItemGroup>
 </Project>
