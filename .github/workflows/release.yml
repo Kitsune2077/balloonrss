@@ -71,19 +71,25 @@ jobs:
           body: |
             ## BalloonRSS ${{ steps.version.outputs.version }}
 
-            Migration from .NET Framework 3.5 to .NET 10, fixing connection errors
-            ("The underlying connection was closed") with RSS feeds that require TLS 1.2+.
+            ### Highlights
+            * Clicking a news balloon now opens the article in a small embedded browser window
+              (falls back to the default browser if the WebView2 runtime is not installed).
+            * The slim installer is now the default `setup.exe`; the installer with the bundled
+              .NET Desktop Runtime is available as `setup_with_dependencies.exe`.
+
+            Based on the .NET 10 migration which fixes connection errors with RSS feeds
+            that require TLS 1.2+.
 
             ### Downloads
-            * **BalloonRSS_${{ steps.version.outputs.version }}_setup.exe** - full installer with the
-              .NET Desktop Runtime 10 bundled (works offline).
-            * **BalloonRSS_${{ steps.version.outputs.version }}_setup_lite.exe** - slim installer;
+            * **BalloonRSS_${{ steps.version.outputs.version }}_setup.exe** - slim installer;
               requires the .NET Desktop Runtime 10. If it is missing, the installer offers to open
               the official download page.
+            * **BalloonRSS_${{ steps.version.outputs.version }}_setup_with_dependencies.exe** - full
+              installer with the .NET Desktop Runtime 10 bundled (works offline).
             * **BalloonRSS_${{ steps.version.outputs.version }}_portable.zip** - portable version;
               all data is stored in a `data` folder next to the executable. Also requires the
               .NET Desktop Runtime 10.
           files: |
             install/BalloonRSS_${{ steps.version.outputs.version }}_setup.exe
-            install/BalloonRSS_${{ steps.version.outputs.version }}_setup_lite.exe
+            install/BalloonRSS_${{ steps.version.outputs.version }}_setup_with_dependencies.exe
             BalloonRSS_${{ steps.version.outputs.version }}_portable.zip

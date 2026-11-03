@@ -571,16 +571,15 @@ namespace BalloonRss
                     // get most recent item of queue
                     RssItem rssItem = retriever.rssHistory.ToArray()[retriever.rssHistory.Count - 1];
 
-                    // start browser
+                    // store the activation (not for application update messages)
                     if (rssItem.GetType() != typeof(RssUpdateItem))
                     {
                         rssItem.channel.ActivateItem(rssItem);
                     }
-                    else
-                    {
-                        // this is an RSS update information
-                        System.Diagnostics.Process.Start(rssItem.link);
-                    }
+
+                    // display the article page in a small web window;
+                    // falls back to the default browser if WebView2 is not available
+                    FormArticleView.Open(rssItem.title, rssItem.link);
                 }
                 else
                 {

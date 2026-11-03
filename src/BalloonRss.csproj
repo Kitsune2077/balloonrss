@@ -79,6 +79,7 @@
     <PackageReference Include="Microsoft.DotNet.UpgradeAssistant.Extensions.Default.Analyzers" Version="0.4.355802">
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
+    <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.2903.40" />
     <PackageReference Include="Microsoft.Windows.Compatibility" Version="10.0.0" />
   </ItemGroup>
 </Project>

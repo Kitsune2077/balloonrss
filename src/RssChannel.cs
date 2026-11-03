@@ -282,7 +282,14 @@ namespace BalloonRss
 
         private static String GetRssFeedFolder()
         {
+#if PORTABLE
+            // portable mode: keep the feed data in the data folder next to the executable
+            String feedFolder = System.IO.Path.Combine(PortableSettingsProvider.DataDirectory, "rssFeeds");
+            Directory.CreateDirectory(feedFolder);
+            return feedFolder;
+#else
             return System.Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + rssFeedDirName;
+#endif
         }
 
         private static String GetRssViewedFilename(String url)
@@ -397,8 +404,7 @@ namespace BalloonRss
             // update counter
             channelOpenedCount++;
 
-            // open browser
-            System.Diagnostics.Process.Start(rssItem.link);
+            // the activation (opening of the article page) is performed by the caller
         }
 
 

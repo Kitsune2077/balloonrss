@@ -31,6 +31,6 @@ using System.Resources;
 //      Revision
 //
 // KEEP THIS CONSISTENT WITH APPL_VERSION IN balloonRSS.nsi INSTALLER!
-[assembly: AssemblyVersion("2.9.1.0")]
-[assembly: AssemblyFileVersion("2.9.1.0")]
+[assembly: AssemblyVersion("2.9.2.0")]
+[assembly: AssemblyFileVersion("2.9.2.0")]
 [assembly: NeutralResourcesLanguageAttribute("en")]

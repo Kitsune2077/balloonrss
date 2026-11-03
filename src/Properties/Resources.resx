@@ -471,4 +471,8 @@
     <value>New version of BalloonRSS available: </value>
     <comment>title of application update message (end with ": " because the new version label is appended at the string end)</comment>
   </data>
+  <data name="str_articleViewOpenExternal" xml:space="preserve">
+    <value>Open in browser</value>
+    <comment>button in the article view window to open the page in the default web browser</comment>
+  </data>
 </root>

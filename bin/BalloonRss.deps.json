@@ -8,7 +8,11 @@
     ".NETCoreApp,Version=v10.0": {
       "BalloonRss/1.0.0": {
         "dependencies": {
-          "Microsoft.Windows.Compatibility": "10.0.0"
+          "Microsoft.Web.WebView2": "1.0.2903.40",
+          "Microsoft.Windows.Compatibility": "10.0.0",
+          "Microsoft.Web.WebView2.Core": "1.0.2903.40",
+          "Microsoft.Web.WebView2.WinForms": "1.0.2903.40",
+          "Microsoft.Web.WebView2.Wpf": "1.0.2903.40"
         },
         "runtime": {
           "BalloonRss.dll": {}
@@ -19,6 +23,25 @@
           "lib/net8.0/Microsoft.Extensions.ObjectPool.dll": {
             "assemblyVersion": "8.0.0.0",
             "fileVersion": "8.0.1024.46804"
+          }
+        }
+      },
+      "Microsoft.Web.WebView2/1.0.2903.40": {
+        "runtimeTargets": {
+          "runtimes/win-arm64/native/WebView2Loader.dll": {
+            "rid": "win-arm64",
+            "assetType": "native",
+            "fileVersion": "1.0.2903.40"
+          },
+          "runtimes/win-x64/native/WebView2Loader.dll": {
+            "rid": "win-x64",
+            "assetType": "native",
+            "fileVersion": "1.0.2903.40"
+          },
+          "runtimes/win-x86/native/WebView2Loader.dll": {
+            "rid": "win-x86",
+            "assetType": "native",
+            "fileVersion": "1.0.2903.40"
           }
         }
       },
@@ -746,6 +769,30 @@
             "locale": "zh-Hant"
           }
         }
+      },
+      "Microsoft.Web.WebView2.Core/1.0.2903.40": {
+        "runtime": {
+          "Microsoft.Web.WebView2.Core.dll": {
+            "assemblyVersion": "1.0.2903.40",
+            "fileVersion": "1.0.2903.40"
+          }
+        }
+      },
+      "Microsoft.Web.WebView2.WinForms/1.0.2903.40": {
+        "runtime": {
+          "Microsoft.Web.WebView2.WinForms.dll": {
+            "assemblyVersion": "1.0.2903.40",
+            "fileVersion": "1.0.2903.40"
+          }
+        }
+      },
+      "Microsoft.Web.WebView2.Wpf/1.0.2903.40": {
+        "runtime": {
+          "Microsoft.Web.WebView2.Wpf.dll": {
+            "assemblyVersion": "1.0.2903.40",
+            "fileVersion": "1.0.2903.40"
+          }
+        }
       }
     }
   },
@@ -761,6 +808,13 @@
       "sha512": "sha512-u7gAG7JgxF8VSJUGPSudAcPxOt+ymJKQCSxNRxiuKV+klCQbHljQR75SilpedCTfhPWDhtUwIJpnDVtspr9nMg==",
       "path": "microsoft.extensions.objectpool/8.0.10",
       "hashPath": "microsoft.extensions.objectpool.8.0.10.nupkg.sha512"
+    },
+    "Microsoft.Web.WebView2/1.0.2903.40": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-THrzYAnJgE3+cNH+9Epr44XjoZoRELdVpXlWGPs6K9C9G6TqyDfVCeVAR/Er8ljLitIUX5gaSkPsy9wRhD1sgQ==",
+      "path": "microsoft.web.webview2/1.0.2903.40",
+      "hashPath": "microsoft.web.webview2.1.0.2903.40.nupkg.sha512"
     },
     "Microsoft.Windows.Compatibility/10.0.0": {
       "type": "package",
@@ -1048,6 +1102,21 @@
       "sha512": "sha512-FziIBleSpygZOBudSeMkawLgfarnSam7paGkTtV9ITyTmw/TdEqB+moS0TeApmNfAMWGbcWXDXr3djckuLgGDg==",
       "path": "system.web.services.description/8.1.2",
       "hashPath": "system.web.services.description.8.1.2.nupkg.sha512"
+    },
+    "Microsoft.Web.WebView2.Core/1.0.2903.40": {
+      "type": "reference",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "Microsoft.Web.WebView2.WinForms/1.0.2903.40": {
+      "type": "reference",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "Microsoft.Web.WebView2.Wpf/1.0.2903.40": {
+      "type": "reference",
+      "serviceable": false,
+      "sha512": ""
     }
   }
 }

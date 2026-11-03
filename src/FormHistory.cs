@@ -123,17 +123,16 @@ namespace BalloonRss
         {
             foreach (ListViewItem listItem in listView.SelectedItems)
             {
-                // start the link of the RSS item
+                // open the link of the RSS item
                 RssItem rssItem = rssHistory[rssHistory.Length - 1 - listItem.Index];
                 if (rssItem.GetType() != typeof(RssUpdateItem))
                 {
                     rssItem.channel.ActivateItem(rssItem);
                 }
-                else
-                {
-                    // this is an application update information
-                    System.Diagnostics.Process.Start(rssItem.link);
-                }
+
+                // display the article page in a small web window;
+                // falls back to the default browser if WebView2 is not available
+                FormArticleView.Open(rssItem.title, rssItem.link);
             }
 
             // close window

@@ -19,7 +19,7 @@
 ;--------------------------------
 ;Definitions
 !define APPL_NAME "BalloonRSS"
-!define APPL_VERSION "2.9.1"  ; keep this consistent with AssemblyInfo.cs!
+!define APPL_VERSION "2.9.2"  ; keep this consistent with AssemblyInfo.cs!
 !define PRODUCT_PUBLISHER "Roman Morawek"
 !define PRODUCT_PUBLISHER_WEB_SITE "https://www.embyt.com"
 !define PRODUCT_WEB_SITE "https://embyt.github.io/balloonrss"
@@ -61,9 +61,9 @@
 ;Name and file
 Name "${APPL_NAME} ${APPL_VERSION}"
 !ifdef DOTNET_RUNTIME_BUNDLED
-OutFile "${APPL_NAME}_${APPL_VERSION}_setup.exe"
+OutFile "${APPL_NAME}_${APPL_VERSION}_setup_with_dependencies.exe"
 !else
-OutFile "${APPL_NAME}_${APPL_VERSION}_setup_lite.exe"
+OutFile "${APPL_NAME}_${APPL_VERSION}_setup.exe"
 !endif
 
 ;Default installation folder

@@ -876,5 +876,14 @@ namespace BalloonRss.Properties {
                 return ResourceManager.GetString("str_updateTitle", resourceCulture);
             }
         }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Open in browser.
+        /// </summary>
+        internal static string str_articleViewOpenExternal {
+            get {
+                return ResourceManager.GetString("str_articleViewOpenExternal", resourceCulture);
+            }
+        }
     }
 }
