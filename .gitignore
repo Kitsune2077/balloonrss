@@ -10,3 +10,4 @@ src/obj/
 publish/
 install/*.exe
 /dotnet-runtime.exe
+bin/data/

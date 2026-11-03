@@ -47,7 +47,14 @@ namespace BalloonRss
             {
                 // this call throws if no WebView2 runtime is available
                 _ = CoreWebView2Environment.GetAvailableBrowserVersionString();
-                new FormArticleView(title, link).Show();
+                FormArticleView form = new FormArticleView(title, link);
+                form.Show();
+                // the window is opened from a shell balloon click where the system
+                // does not grant our process the foreground: force the new window
+                // to the top of the z-order and activate it explicitly
+                form.TopMost = true;
+                form.TopMost = false;
+                form.Activate();
             }
             catch (Exception)
             {

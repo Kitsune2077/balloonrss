@@ -74,6 +74,8 @@ jobs:
             ### Highlights
             * Clicking a news balloon now opens the article in a small embedded browser window
               (falls back to the default browser if the WebView2 runtime is not installed).
+            * The article window reliably appears in the foreground when opened from a
+              notification click.
             * The slim installer is now the default `setup.exe`; the installer with the bundled
               .NET Desktop Runtime is available as `setup_with_dependencies.exe`.
 
