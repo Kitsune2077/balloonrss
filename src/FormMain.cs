@@ -21,6 +21,7 @@ using System.ComponentModel;
 using System.Windows.Forms;
 using System.Collections.Generic;
 using BalloonRss.Properties;
+using Microsoft.Toolkit.Uwp.Notifications;
 
 
 namespace BalloonRss
@@ -63,6 +64,64 @@ namespace BalloonRss
         const int WS_EX_TOOLWINDOW = 0x00000080;
         const int WS_EX_APPWINDOW = 0x00040000;
 
+        // instance of the main form for routing toast activations
+        private static FormMain mainFormInstance = null;
+
+        // article link of a toast activation which arrived before the main form existed
+        private static volatile String pendingToastArticleLink = null;
+
+
+        // handles the activation of a clicked toast notification
+        private static void OnToastActivated(ToastNotificationActivatedEventArgsCompat toastArgs)
+        {
+            String link = ToastHelper.ParseArticleActivation(toastArgs.Argument);
+            if (link == null)
+                return;
+
+            FormMain mainForm = mainFormInstance;
+            if ((mainForm != null) && mainForm.IsHandleCreated)
+            {
+                // forward the activation to the UI thread of the running instance
+                mainForm.BeginInvoke((Action)(() => mainForm.OpenToastArticle(link)));
+            }
+            else
+            {
+                // the main form does not exist yet (toast click started the application):
+                // park the link, the constructor will pick it up
+                pendingToastArticleLink = link;
+            }
+        }
+
+
+        // opens the article of an activated toast; performs the usual activation
+        // bookkeeping if the corresponding rss item is still in the history
+        internal void OpenToastArticle(String link)
+        {
+            // search the matching history item
+            RssItem matchedItem = null;
+            foreach (RssItem rssItem in retriever.rssHistory)
+            {
+                if (rssItem.link == link)
+                {
+                    matchedItem = rssItem;
+                    break;
+                }
+            }
+
+            // store the activation (not for application update messages)
+            if ((matchedItem != null) && (matchedItem.GetType() != typeof(RssUpdateItem)))
+            {
+                matchedItem.channel.ActivateItem(matchedItem);
+            }
+
+            // display the article page in a small web window;
+            // falls back to the default browser if WebView2 is not available
+            if (matchedItem != null)
+                FormArticleView.Open(matchedItem.title, link);
+            else
+                FormArticleView.Open(link, link);
+        }
+
 
 
         [STAThread]
@@ -78,6 +137,12 @@ namespace BalloonRss
                 // check whether the application is already running
                 if (singleInstanceMutex.WaitOne(0, false))
                 {
+                    // subscribe to toast activations before any UI exists; this covers
+                    // clicks on toasts in the notification center while the application
+                    // is running as well as the case where the click itself starts the
+                    // application
+                    ToastNotificationManagerCompat.OnActivated += OnToastActivated;
+
                     // start application
                     Application.EnableVisualStyles();
                     Application.SetCompatibleTextRenderingDefault(false);
@@ -135,6 +200,17 @@ namespace BalloonRss
 
             // read channel settings
             bool firstStart = retriever.InitializeChannels();
+
+            // remember this instance for routing toast activations
+            mainFormInstance = this;
+
+            // check whether a toast activation started the application
+            if (pendingToastArticleLink != null)
+            {
+                String activatedLink = pendingToastArticleLink;
+                pendingToastArticleLink = null;
+                OpenToastArticle(activatedLink);
+            }
 
             if (firstStart)
             {
@@ -703,8 +779,10 @@ namespace BalloonRss
                 body = rssItem.description;
             }
 
-            // display it
-            applicationIcon.ShowBalloonTip(Settings.Default.balloonTimespan * 1000, title, body, ToolTipIcon.None);
+            // display it: use a real toast notification if possible, so the click also
+            // works in the notification center; fall back to the classic tray balloon
+            if (!ToastHelper.ShowArticleToast(title, body, rssItem.link))
+                applicationIcon.ShowBalloonTip(Settings.Default.balloonTimespan * 1000, title, body, ToolTipIcon.None);
         }
         
 

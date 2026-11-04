@@ -76,6 +76,8 @@ jobs:
               (falls back to the default browser if the WebView2 runtime is not installed).
             * The article window reliably appears in the foreground when opened from a
               notification click.
+            * Article notifications are now real Windows toasts: clicking them also works
+              from the notification center (requires Windows 10 1803+).
             * The slim installer is now the default `setup.exe`; the installer with the bundled
               .NET Desktop Runtime is available as `setup_with_dependencies.exe`.
 
