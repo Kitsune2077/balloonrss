@@ -19,7 +19,7 @@
 ;--------------------------------
 ;Definitions
 !define APPL_NAME "BalloonRSS"
-!define APPL_VERSION "2.9.4"  ; keep this consistent with AssemblyInfo.cs!
+!define APPL_VERSION "2.9.5"  ; keep this consistent with AssemblyInfo.cs!
 !define PRODUCT_PUBLISHER "Roman Morawek"
 !define PRODUCT_PUBLISHER_WEB_SITE "https://www.embyt.com"
 !define PRODUCT_WEB_SITE "https://embyt.github.io/balloonrss"
@@ -33,9 +33,18 @@
 ; setup executable; it must then be available as ${BASEDIR}\dotnet-runtime.exe
 ; (the CI workflow downloads it there before compiling). Without the define a
 ; slim setup is built which guides the user to the runtime download instead.
+; compile with /DNET48_BUILD to build the Windows 7/8 setup: it packages the
+; .NET Framework 4.8 flavor from ${BASEDIR}\publish\installer-net48 and checks
+; for the .NET Framework 4.8 runtime instead of the .NET Desktop Runtime 10.
+!define DOTNET_FRAMEWORK48_URL "https://go.microsoft.com/fwlink/?linkid=2088631"
+
+!ifdef NET48_BUILD
+!define PUBLISHDIR "${BASEDIR}\publish\installer-net48"
+!else
+!define PUBLISHDIR "${BASEDIR}\publish\installer"
+!endif
 
 !define BASEDIR ".."
-!define PUBLISHDIR "${BASEDIR}\publish\installer"
 
 
 ;--------------------------------
@@ -60,7 +69,9 @@
 
 ;Name and file
 Name "${APPL_NAME} ${APPL_VERSION}"
-!ifdef DOTNET_RUNTIME_BUNDLED
+!ifdef NET48_BUILD
+OutFile "${APPL_NAME}_${APPL_VERSION}_setup_win7.exe"
+!else ifdef DOTNET_RUNTIME_BUNDLED
 OutFile "${APPL_NAME}_${APPL_VERSION}_setup_with_dependencies.exe"
 !else
 OutFile "${APPL_NAME}_${APPL_VERSION}_setup.exe"
@@ -127,6 +138,7 @@ Section "General" SecGeneral
   ; Install all application files from the publish output
   File /r "${PUBLISHDIR}\*"
 
+!ifndef NET48_BUILD
   ; Check whether the .NET Desktop Runtime is installed
   StrCpy $DotNetMissing 1
   FindFirst $R0 $R1 "$PROGRAMFILES64\dotnet\shared\Microsoft.WindowsDesktop.App\${DOTNET_RUNTIME_VERSION_PREFIX}*"
@@ -153,6 +165,22 @@ open_dotnet_download:
     ExecShell "open" "${DOTNET_RUNTIME_URL}"
 !endif
 dotnet_done:
+!else
+  ; Check whether the .NET Framework 4.8 is installed (release number >= 528040)
+  StrCpy $DotNetMissing 1
+  ReadRegDWORD $R0 HKLM "SOFTWARE\Microsoft\NET Framework Setup\NDP\v4\Full" "Release"
+  IfErrors 0 fw48_compare
+    StrCpy $R0 0
+fw48_compare:
+  IntCmp $R0 528040 fw48_ok fw48_missing fw48_ok
+fw48_missing:
+    MessageBox MB_YESNO|MB_ICONQUESTION "BalloonRSS requires the Microsoft .NET Framework 4.8, which was not found on this system.$\n$\nOpen the official download page now?$\n$\n(After installing it, run this setup again to launch BalloonRSS.)" IDYES fw48_download
+    Goto dotnet_done
+fw48_download:
+    ExecShell "open" "${DOTNET_FRAMEWORK48_URL}"
+fw48_ok:
+dotnet_done:
+!endif
 
   ;Create shortcuts
   !insertmacro MUI_STARTMENU_WRITE_BEGIN Application

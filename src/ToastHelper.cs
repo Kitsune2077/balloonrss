@@ -16,6 +16,7 @@ BalloonRSS - Simple RSS news aggregator using balloon tooltips
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#if !NET48
 using System;
 using Microsoft.Toolkit.Uwp.Notifications;
 using Windows.UI.Notifications;
@@ -88,3 +89,4 @@ namespace BalloonRss
         }
     }
 }
+#endif

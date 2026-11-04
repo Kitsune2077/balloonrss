@@ -31,35 +31,49 @@ jobs:
         shell: bash
         run: echo "version=$(sed -n 's/^!define APPL_VERSION "\([^"]*\)".*/\1/p' install/balloonRSS.nsi)" >> "$GITHUB_OUTPUT"
 
-      - name: Publish installer build (framework-dependent)
-        run: dotnet publish src/BalloonRss.csproj -c Release -r win-x64 --self-contained false -o publish/installer
+      - name: Publish installer build (net10, framework-dependent)
+        run: dotnet publish src/BalloonRss.csproj -c Release -f net10.0-windows10.0.17763 -r win-x64 --self-contained false -o publish/installer
 
-      - name: Publish portable build (framework-dependent)
-        run: dotnet publish src/BalloonRss.csproj -c Release -r win-x64 --self-contained false -p:Portable=true -o publish/portable
+      - name: Publish portable build (net10, framework-dependent)
+        run: dotnet publish src/BalloonRss.csproj -c Release -f net10.0-windows10.0.17763 -r win-x64 --self-contained false -p:Portable=true -o publish/portable
+
+      - name: Publish installer build (net48, for Windows 7/8)
+        run: dotnet publish src/BalloonRss.csproj -c Release -f net48 -o publish/installer-net48
+
+      - name: Publish portable build (net48, for Windows 7/8)
+        run: dotnet publish src/BalloonRss.csproj -c Release -f net48 -p:Portable=true -o publish/portable-net48
 
       - name: Create portable data folder
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Path publish/portable/data | Out-Null
           Set-Content -Path publish/portable/data/.keep -Value "BalloonRSS stores its portable data in this folder."
+          New-Item -ItemType Directory -Path publish/portable-net48/data | Out-Null
+          Set-Content -Path publish/portable-net48/data/.keep -Value "BalloonRSS stores its portable data in this folder."
 
-      - name: Create portable zip
+      - name: Create portable zips
         shell: pwsh
-        run: Compress-Archive -Path publish/portable/* -DestinationPath "BalloonRSS_${{ steps.version.outputs.version }}_portable.zip" -Force
+        run: |
+          Compress-Archive -Path publish/portable/* -DestinationPath "BalloonRSS_${{ steps.version.outputs.version }}_portable.zip" -Force
+          Compress-Archive -Path publish/portable-net48/* -DestinationPath "BalloonRSS_${{ steps.version.outputs.version }}_portable_win7.zip" -Force
 
       - name: Install NSIS
         shell: pwsh
         run: choco install nsis -y --no-progress
 
-      - name: Build NSIS installer (lite, without bundled runtime)
+      - name: Build NSIS installer (net10, without bundled runtime)
         shell: pwsh
         run: '& "C:\Program Files (x86)\NSIS\makensis.exe" /V3 install/balloonRSS.nsi'
+
+      - name: Build NSIS installer (net48, for Windows 7/8)
+        shell: pwsh
+        run: '& "C:\Program Files (x86)\NSIS\makensis.exe" /V3 /DNET48_BUILD install/balloonRSS.nsi'
 
       - name: Download .NET Desktop Runtime 10 (bundled into full installer)
         shell: pwsh
         run: Invoke-WebRequest -Uri "https://aka.ms/dotnet/10.0/windowsdesktop-runtime-win-x64.exe" -OutFile dotnet-runtime.exe
 
-      - name: Build NSIS installer (with bundled runtime)
+      - name: Build NSIS installer (net10, with bundled runtime)
         shell: pwsh
         run: '& "C:\Program Files (x86)\NSIS\makensis.exe" /V3 /DDOTNET_RUNTIME_BUNDLED install/balloonRSS.nsi'
 
@@ -72,28 +86,31 @@ jobs:
             ## BalloonRSS ${{ steps.version.outputs.version }}
 
             ### Highlights
-            * Clicking a news balloon now opens the article in a small embedded browser window
-              (falls back to the default browser if the WebView2 runtime is not installed).
-            * The article window reliably appears in the foreground when opened from a
-              notification click.
-            * Article notifications are now real Windows toasts: clicking them also works
-              from the notification center (requires Windows 10 1803+).
-            * The slim installer is now the default `setup.exe`; the installer with the bundled
-              .NET Desktop Runtime is available as `setup_with_dependencies.exe`.
-
-            Based on the .NET 10 migration which fixes connection errors with RSS feeds
-            that require TLS 1.2+.
+            * Windows 10+: article notifications are real Windows toasts; clicking them opens
+              the article in a small embedded browser window - also from the notification
+              center (falls back to the default browser if the WebView2 runtime is missing).
+            * Windows 7/8 support preserved through dedicated builds based on the
+              .NET Framework 4.8 with classic balloon notifications.
 
             ### Downloads
-            * **BalloonRSS_${{ steps.version.outputs.version }}_setup.exe** - slim installer;
-              requires the .NET Desktop Runtime 10. If it is missing, the installer offers to open
-              the official download page.
-            * **BalloonRSS_${{ steps.version.outputs.version }}_setup_with_dependencies.exe** - full
-              installer with the .NET Desktop Runtime 10 bundled (works offline).
-            * **BalloonRSS_${{ steps.version.outputs.version }}_portable.zip** - portable version;
-              all data is stored in a `data` folder next to the executable. Also requires the
-              .NET Desktop Runtime 10.
+            * **BalloonRSS_${{ steps.version.outputs.version }}_setup.exe** - Windows 10+ slim
+              installer; requires the .NET Desktop Runtime 10. If it is missing, the installer
+              offers to open the official download page.
+            * **BalloonRSS_${{ steps.version.outputs.version }}_setup_with_dependencies.exe** -
+              Windows 10+ full installer with the .NET Desktop Runtime 10 bundled (works offline).
+            * **BalloonRSS_${{ steps.version.outputs.version }}_portable.zip** - Windows 10+
+              portable version; all data is stored in a `data` folder next to the executable.
+            * **BalloonRSS_${{ steps.version.outputs.version }}_setup_win7.exe** - installer for
+              Windows 7 SP1/8/8.1; requires the .NET Framework 4.8. The installer offers to open
+              the official download page if it is missing.
+            * **BalloonRSS_${{ steps.version.outputs.version }}_portable_win7.zip** - portable
+              version for Windows 7 SP1/8/8.1.
           files: |
+            install/BalloonRSS_${{ steps.version.outputs.version }}_setup.exe
+            install/BalloonRSS_${{ steps.version.outputs.version }}_setup_with_dependencies.exe
+            install/BalloonRSS_${{ steps.version.outputs.version }}_setup_win7.exe
+            BalloonRSS_${{ steps.version.outputs.version }}_portable.zip
+            BalloonRSS_${{ steps.version.outputs.version }}_portable_win7.zip
             install/BalloonRSS_${{ steps.version.outputs.version }}_setup.exe
             install/BalloonRSS_${{ steps.version.outputs.version }}_setup_with_dependencies.exe
             BalloonRSS_${{ steps.version.outputs.version }}_portable.zip

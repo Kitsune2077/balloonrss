@@ -11,3 +11,4 @@ publish/
 install/*.exe
 /dotnet-runtime.exe
 bin/data/
+bin/net48/

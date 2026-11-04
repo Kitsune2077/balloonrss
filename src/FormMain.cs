@@ -21,7 +21,9 @@ using System.ComponentModel;
 using System.Windows.Forms;
 using System.Collections.Generic;
 using BalloonRss.Properties;
+#if !NET48
 using Microsoft.Toolkit.Uwp.Notifications;
+#endif
 
 
 namespace BalloonRss
@@ -71,6 +73,7 @@ namespace BalloonRss
         private static volatile String pendingToastArticleLink = null;
 
 
+#if !NET48
         // handles the activation of a clicked toast notification
         private static void OnToastActivated(ToastNotificationActivatedEventArgsCompat toastArgs)
         {
@@ -91,6 +94,7 @@ namespace BalloonRss
                 pendingToastArticleLink = link;
             }
         }
+#endif
 
 
         // opens the article of an activated toast; performs the usual activation
@@ -137,11 +141,21 @@ namespace BalloonRss
                 // check whether the application is already running
                 if (singleInstanceMutex.WaitOne(0, false))
                 {
+#if !NET48
                     // subscribe to toast activations before any UI exists; this covers
                     // clicks on toasts in the notification center while the application
                     // is running as well as the case where the click itself starts the
                     // application
-                    ToastNotificationManagerCompat.OnActivated += OnToastActivated;
+                    try
+                    {
+                        ToastNotificationManagerCompat.OnActivated += OnToastActivated;
+                    }
+                    catch (Exception)
+                    {
+                        // toasts are not available on this system: the classic
+                        // tray balloons are used instead
+                    }
+#endif
 
                     // start application
                     Application.EnableVisualStyles();
@@ -779,9 +793,11 @@ namespace BalloonRss
                 body = rssItem.description;
             }
 
+#if !NET48
             // display it: use a real toast notification if possible, so the click also
             // works in the notification center; fall back to the classic tray balloon
             if (!ToastHelper.ShowArticleToast(title, body, rssItem.link))
+#endif
                 applicationIcon.ShowBalloonTip(Settings.Default.balloonTimespan * 1000, title, body, ToolTipIcon.None);
         }
         
